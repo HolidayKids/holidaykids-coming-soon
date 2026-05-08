@@ -872,6 +872,11 @@
 </div><!-- /pp-overlay -->
 
 <script>
+  // ── FORMSPREE CONFIG ──────────────────────────────────
+  // Replace these IDs if your Formspree forms change.
+  const FORMSPREE_PARENT_ID   = 'xrerovzy';
+  const FORMSPREE_PROVIDER_ID = 'mojypzaj';
+
   // ── VALIDATION HELPER ─────────────────────────────────
   function shakeInvalid(el) {
     el.style.borderColor = '#E24B4A';
@@ -880,8 +885,19 @@
     setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 1800);
   }
 
+  function setButtonLoading(btn, loading) {
+    btn.disabled = loading;
+    btn.style.opacity = loading ? '0.7' : '';
+    btn.textContent = loading ? 'Sending…' : btn.dataset.label;
+  }
+
+  // Store original button labels on page load
+  document.querySelectorAll('.col-btn').forEach(btn => {
+    btn.dataset.label = btn.textContent;
+  });
+
   // ── PARENT FORM ───────────────────────────────────────
-  function submitParent() {
+  async function submitParent() {
     const email = document.getElementById('parent-email');
     if (!email.value.trim() || !email.value.includes('@')) {
       shakeInvalid(email); return;
@@ -892,11 +908,27 @@
       suburb: document.getElementById('parent-suburb').value.trim(),
       type:   'parent',
     };
-    // In production: fetch('/api/waitlist', { method:'POST', body: JSON.stringify(data) })
-    console.log('Parent signup:', data);
-    document.getElementById('parent-form-fields').style.display = 'none';
-    document.getElementById('parent-note').style.display = 'none';
-    document.getElementById('parent-success').classList.add('show');
+    const btn = document.querySelector('#parent-form-fields .col-btn');
+    setButtonLoading(btn, true);
+    try {
+      const res = await fetch(`https://formspree.io/f/${FORMSPREE_PARENT_ID}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Network response was not ok');
+      document.getElementById('parent-form-fields').style.display = 'none';
+      document.getElementById('parent-note').style.display = 'none';
+      document.getElementById('parent-success').classList.add('show');
+    } catch (err) {
+      setButtonLoading(btn, false);
+      btn.textContent = 'Something went wrong — try again';
+      btn.style.background = '#E24B4A';
+      setTimeout(() => {
+        btn.textContent = btn.dataset.label;
+        btn.style.background = '';
+      }, 3000);
+    }
   }
 
   document.getElementById('parent-email').addEventListener('keydown', e => {
@@ -904,7 +936,7 @@
   });
 
   // ── PROVIDER FORM ─────────────────────────────────────
-  function submitProvider() {
+  async function submitProvider() {
     const email = document.getElementById('prov-email');
     const org   = document.getElementById('prov-org');
     if (!org.value.trim()) { shakeInvalid(org); return; }
@@ -918,11 +950,27 @@
       category:     document.getElementById('prov-category').value,
       type:         'provider',
     };
-    // In production: fetch('/api/provider-waitlist', { method:'POST', body: JSON.stringify(data) })
-    console.log('Provider signup:', data);
-    document.getElementById('provider-form-fields').style.display = 'none';
-    document.getElementById('provider-note').style.display = 'none';
-    document.getElementById('provider-success').classList.add('show');
+    const btn = document.querySelector('#provider-form-fields .col-btn');
+    setButtonLoading(btn, true);
+    try {
+      const res = await fetch(`https://formspree.io/f/${FORMSPREE_PROVIDER_ID}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Network response was not ok');
+      document.getElementById('provider-form-fields').style.display = 'none';
+      document.getElementById('provider-note').style.display = 'none';
+      document.getElementById('provider-success').classList.add('show');
+    } catch (err) {
+      setButtonLoading(btn, false);
+      btn.textContent = 'Something went wrong — try again';
+      btn.style.background = '#E24B4A';
+      setTimeout(() => {
+        btn.textContent = btn.dataset.label;
+        btn.style.background = '';
+      }, 3000);
+    }
   }
 
   document.getElementById('prov-email').addEventListener('keydown', e => {
